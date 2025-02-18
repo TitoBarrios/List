@@ -16,6 +16,10 @@ public class SimpleList<T> implements List<T> {
         array = (T[]) java.lang.reflect.Array.newInstance(Object.class, length);
     }
 
+    public SimpleList(T[] array) {
+        this.array = array;
+    }
+
     @Override
     public int size() {
         return array.length;
@@ -35,7 +39,22 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public Iterator<T> iterator() {
-        throw new UnsupportedOperationException("Unimplemented method 'iterator'");
+        return new Iterator<T>() {
+            private int index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return index < array.length;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNext())
+                    return null;
+                index += 1;
+                return array[index];
+            }
+        };
     }
 
     @Override
@@ -45,7 +64,7 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public <T> T[] toArray(T[] a) {
-        throw new UnsupportedOperationException("Unimplemented method 'toArray'");
+        return (T[]) array;
     }
 
     @Override
@@ -59,6 +78,7 @@ public class SimpleList<T> implements List<T> {
             }
             newArray[i] = array[i];
         }
+        array = newArray;
         return false;
     }
 
@@ -79,27 +99,72 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Unimplemented method 'containsAll'");
+        for(int i = 0; i < array.length; i++)
+            for(int j = 0; i < c.size(); j++){
+                if(c.contains(array[i])) break;
+                if(j == c.size() - 1) return false;
+            }
+        return true;
     }
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
-        throw new UnsupportedOperationException("Unimplemented method 'addAll'");
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(Object.class, array.length + c.size());
+        Iterator iterator = c.iterator();
+        for(int i = 0; i < newArray.length; i++) {
+            if(i >= array.length){
+                newArray[i] = (T) iterator.next();
+                continue;
+            }
+            newArray[i] = array[i];
+        }
+        array = newArray;
+        return true;
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
-        throw new UnsupportedOperationException("Unimplemented method 'addAll'");
+        if(index > array.length || index < 0) return false;
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(Object.class, array.length + c.size());
+        Iterator iterator = c.iterator();
+        for(int i = 0; i < newArray.length; i++) {
+            if(i >= index && iterator.hasNext()) {
+                newArray[i] = (T) iterator.next();
+                continue;
+            }
+            if(!iterator.hasNext()) {
+                newArray[i] = array[i - c.size()];
+            }
+            newArray[i] = array[i];
+        }
+        array = newArray;
+        return true;
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Unimplemented method 'removeAll'");
+        boolean isModified = false;
+        for(int i = 0; i < array.length; i++)
+            for(int j = 0; i < c.size(); j++)
+                if(c.contains(array[i])) {
+                    isModified = true;
+                    remove(i);
+                    break;
+                }
+        return isModified;
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Unimplemented method 'retainAll'");
+        boolean isModified = false;
+        for(int i = 0; i < array.length; i++)
+            for(int j = 0; i < c.size(); j++)
+                if(!c.contains(array[i])) {
+                    isModified = true;
+                    remove(i);
+                    break;
+                }
+        return isModified;
     }
 
     @Override
@@ -114,7 +179,7 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public T set(int index, T element) {
-        if(index < array.length) {
+        if(index < array.length && index > 0) {
             array[index] = element;
             return array[index];
         }
@@ -169,10 +234,13 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public List<T> subList(int fromIndex, int toIndex) {
-        throw new UnsupportedOperationException("Unimplemented method 'subList'");
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), toIndex - fromIndex);
+        for(int i = 0; i < newArray.length; i++)
+            newArray[i] = array[i + fromIndex];
+        return new SimpleList<>(newArray);
     }
 
-    // Excluidos 
+    // Excluidos
     @Override
     public ListIterator<T> listIterator() {
         throw new UnsupportedOperationException("Unimplemented method 'listIterator'");

@@ -1,14 +1,15 @@
-# list
+# Custom List
 
-Short description about the project;
+Custom list class implementing Java List interface.
 
-
+## Requirements:
 - Java Development Kit (JDK) 21 or higher.
 - [resources](resources) folder to run the JAR file.
 - Apache Maven 4.0.0 or higher to compile and run the source code.
 
 Note: The [resources](resources) folder and the JAR file must be located in the same folder.
 
+## How to execute the program
 - JAR file
   1. Download the JAR file and the [resources](resources) folder.
   2. Make sure that those files are located in the same folder.
