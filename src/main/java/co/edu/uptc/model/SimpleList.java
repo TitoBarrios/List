@@ -8,6 +8,14 @@ import java.util.ListIterator;
 public class SimpleList<T> implements List<T> {
     private T[] array;
 
+    public SimpleList() {
+        array = (T[]) java.lang.reflect.Array.newInstance(Object.class, 0);
+    }
+
+    public SimpleList(int length) {
+        array = (T[]) java.lang.reflect.Array.newInstance(Object.class, length);
+    }
+
     @Override
     public int size() {
         return array.length;
@@ -20,7 +28,9 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public boolean contains(Object o) {
-        throw new UnsupportedOperationException("Unimplemented method 'contains'");
+        for(T obj : array)
+            if(obj.equals(o)) return true;
+        return false;
     }
 
     @Override
@@ -30,7 +40,7 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public Object[] toArray() {
-        throw new UnsupportedOperationException("Unimplemented method 'toArray'");
+        return (Object[]) array;
     }
 
     @Override
@@ -40,12 +50,31 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public boolean add(T e) {
-        throw new UnsupportedOperationException("Unimplemented method 'add'");
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+        for(int i = 0; i < newArray.length; i++) {
+            if(i == newArray.length + 1) {
+                newArray[i] = e;
+                array = newArray;
+                return true;
+            }
+            newArray[i] = array[i];
+        }
+        return false;
     }
 
     @Override
     public boolean remove(Object o) {
-        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length - 1);
+        boolean isRemoved = false;
+        for(int i = 0; i < array.length; i++) {
+            if(array[i].equals(o)) {
+                isRemoved = true;
+                continue;
+            }
+            newArray[i] = array[i];
+        }
+        if(isRemoved) array = newArray;
+        return isRemoved;
     }
 
     @Override
@@ -75,37 +104,67 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public void clear() {
-        throw new UnsupportedOperationException("Unimplemented method 'clear'");
+        array = (T[]) java.lang.reflect.Array.newInstance(Object.class, 0);
     }
 
     @Override
     public T get(int index) {
-        throw new UnsupportedOperationException("Unimplemented method 'get'");
+        return index >= array.length ? array[index] : null;
     }
 
     @Override
     public T set(int index, T element) {
-        throw new UnsupportedOperationException("Unimplemented method 'set'");
+        if(index < array.length) {
+            array[index] = element;
+            return array[index];
+        }
+        return null;
     }
 
     @Override
     public void add(int index, T element) {
-        throw new UnsupportedOperationException("Unimplemented method 'add'");
+        if(index >= array.length || index < 0) return;
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length + 1);
+        for(int i = 0; i < newArray.length; i++) {
+            if(i == index) {
+                newArray[i] = element;
+                continue;
+            }
+            newArray[i] = array[i > index ? i - 1 : i];
+        }
+        array = newArray;
     }
 
     @Override
     public T remove(int index) {
-        throw new UnsupportedOperationException("Unimplemented method 'remove'");
+        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length - 1);
+        T removed = null;
+        for(int i = 0; i < array.length; i++) {
+            if(i == index) {
+                removed = array[i];
+                continue;
+            }
+            newArray[i] = array[i];
+        }
+        if(removed != null) array = newArray;
+        return removed;
     }
 
     @Override
     public int indexOf(Object o) {
-        throw new UnsupportedOperationException("Unimplemented method 'indexOf'");
+        for(int i = 0; i < array.length; i++)
+            if(array[i].equals(o))
+                return i;
+        return -1;
     }
 
     @Override
     public int lastIndexOf(Object o) {
-        throw new UnsupportedOperationException("Unimplemented method 'lastIndexOf'");
+        int lastFoundIndex = -1;
+        for(int i = 0; i < array.length; i++)
+            if(array[i].equals(o))
+                lastFoundIndex = i;
+        return lastFoundIndex;
     }
 
     @Override
