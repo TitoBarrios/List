@@ -7,60 +7,87 @@ import java.util.List;
 import java.util.ListIterator;
 
 public class SimpleList<T> implements List<T> {
-    private T[] array;
+    
+    private Node head;
 
     public SimpleList() {
-        array = (T[]) java.lang.reflect.Array.newInstance(Object.class, 0);
-    }
-
-    public SimpleList(int length) {
-        array = (T[]) java.lang.reflect.Array.newInstance(Object.class, length);
-    }
-
-    public SimpleList(T[] array) {
-        this.array = array;
+        head = null;
     }
 
     @Override
     public int size() {
-        return array.length;
+        int counter = 0;
+        Node<T> aux = head;
+        while (aux != null) {
+            counter++;
+            aux = aux.getNext();
+        }
+        return counter;
     }
 
     @Override
     public boolean isEmpty() {
-        return array == null;
+        return head == null;
+    }
+
+    @Override
+    public boolean add(T e) {
+        if (head == null) {
+            head = new Node<>(e);
+        } else {
+            Node<T> aux = head;
+            while (aux.getNext() != null) {
+                aux = aux.getNext();
+            }
+            aux.setNext(new Node<>(e));
+        }
+        return true;
     }
 
     @Override
     public boolean contains(Object o) {
-        for(T obj : array)
-            if(obj.equals(o)) return true;
+        Node<T> aux = head;
+        while (aux != null) {
+            if (aux.getData().equals(o)) {
+                return true;
+            }
+            aux = aux.getNext();
+        }
         return false;
     }
 
     @Override
     public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private int index = 0;
+        Iterator<T> iterator = new Iterator<T>() {
+            Node<T> aux = head;
 
             @Override
             public boolean hasNext() {
-                return index < array.length;
+                return aux != null;
             }
 
             @Override
             public T next() {
-                if (!hasNext())
-                    return null;
-                index += 1;
-                return array[index];
+                T data = aux.getData();
+                aux = aux.getNext();
+                return data;
             }
         };
+        return iterator;
     }
 
     @Override
     public Object[] toArray() {
-        return (Object[]) array;
+        int size = size();
+        Object[] array = new Object[size];
+
+        Node<T> aux = head;
+        int i = 0;
+        while (aux != null) {
+            array[i++] = aux.getData();
+            aux = aux.getNext();
+        }
+        return array;
     }
 
     @Override
@@ -70,7 +97,7 @@ public class SimpleList<T> implements List<T> {
             result = Arrays.copyOf(a, size());
         }
         for(int i = 0; i < size(); i++){
-            result[i] = (T) array[i];
+            result[i] = (T) a[i];
         }
         if(a.length > size()){
             for(int i = size(); i < a.length; i++){
@@ -81,47 +108,20 @@ public class SimpleList<T> implements List<T> {
     }
 
     @Override
-    public boolean add(T e) {
-        T[] newArray = Arrays.copyOf(array, size()+1);
-        newArray[size()] = e;
-        array = newArray;
-        return contains(e);
-    }
-
-    @Override
     public boolean remove(Object o) {
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length - 1);
-        boolean isRemoved = false;
-        for(int i = 0; i < array.length; i++) {
-            if(array[i].equals(o)) {
-                isRemoved = true;
-                continue;
-            }
-            newArray[i] = array[i];
+        if (head.getData().equals(o)) {
+            head = head.getNext();
+            return true;
         }
-        if(isRemoved) array = newArray;
-        return isRemoved;
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        for(int i = 0; i < array.length; i++)
-            for(int j = 0; i < c.size(); j++){
-                if(c.contains(array[i])) break;
-                if(j == c.size() - 1) return false;
+        Node<T> aux = head;
+        while (aux.getNext() != null) {
+            if (aux.getNext().getData().equals(o)) {
+                aux.setNext(aux.getNext().getNext());
+                return true;
             }
-        return true;
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends T> c) {
-        boolean modified = false;
-        for (T element : c) {
-            if (add(element)) {
-                modified = true;
-            }
+            aux = aux.getNext();
         }
-        return modified;
+        return false;
     }
 
     @Override
@@ -203,18 +203,20 @@ public class SimpleList<T> implements List<T> {
     }
 
     @Override
-    public T remove(int index) {
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length - 1);
-        T removed = null;
-        for(int i = 0; i < array.length; i++) {
-            if(i == index) {
-                removed = array[i];
-                continue;
-            }
-            newArray[i] = array[i];
+    public List<T> subList(int fromIndex, int toIndex) {
+        SimpleList<T> subList = new SimpleList<>();
+        Node<T> aux = head;
+        int index = 0;
+        while (index < fromIndex && aux != null) {
+            aux = aux.getNext();
+            index++;
         }
-        if(removed != null) array = newArray;
-        return removed;
+        while (index < toIndex && aux != null) {
+            subList.add(aux.getData());
+            aux = aux.getNext();
+            index++;
+        }
+        return subList;
     }
 
     @Override
@@ -235,11 +237,24 @@ public class SimpleList<T> implements List<T> {
     }
 
     @Override
-    public List<T> subList(int fromIndex, int toIndex) {
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), toIndex - fromIndex);
-        for(int i = 0; i < newArray.length; i++)
-            newArray[i] = array[i + fromIndex];
-        return new SimpleList<>(newArray);
+    public boolean containsAll(Collection<?> c) {
+        for (Object element : c) {
+            if (!contains(element)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends T> c) {
+        boolean modified = false;
+        for (T element : c) {
+            if (add(element)) {
+                modified = true;
+            }
+        }
+        return modified;
     }
 
     // Excluidos
