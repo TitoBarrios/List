@@ -1,5 +1,6 @@
 package co.edu.uptc.model;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -64,22 +65,27 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return (T[]) array;
+        T[] result = a;
+        if(a.length < size()){
+            result = Arrays.copyOf(a, size());
+        }
+        for(int i = 0; i < size(); i++){
+            result[i] = (T) array[i];
+        }
+        if(a.length > size()){
+            for(int i = size(); i < a.length; i++){
+                result[i] = null;
+            }
+        }
+        return result;
     }
 
     @Override
     public boolean add(T e) {
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length + 1);
-        for(int i = 0; i < newArray.length; i++) {
-            if(i == newArray.length + 1) {
-                newArray[i] = e;
-                array = newArray;
-                return true;
-            }
-            newArray[i] = array[i];
-        }
+        T[] newArray = Arrays.copyOf(array, size()+1);
+        newArray[size()] = e;
         array = newArray;
-        return false;
+        return contains(e);
     }
 
     @Override
@@ -109,17 +115,13 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public boolean addAll(Collection<? extends T> c) {
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(Object.class, array.length + c.size());
-        Iterator iterator = c.iterator();
-        for(int i = 0; i < newArray.length; i++) {
-            if(i >= array.length){
-                newArray[i] = (T) iterator.next();
-                continue;
+        boolean modified = false;
+        for (T element : c) {
+            if (add(element)) {
+                modified = true;
             }
-            newArray[i] = array[i];
         }
-        array = newArray;
-        return true;
+        return modified;
     }
 
     @Override
@@ -174,7 +176,7 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public T get(int index) {
-        return index >= array.length ? array[index] : null;
+        return (T) array[index];
     }
 
     @Override
