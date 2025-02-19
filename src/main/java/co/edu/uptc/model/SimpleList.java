@@ -171,21 +171,35 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public void clear() {
-        array = (T[]) java.lang.reflect.Array.newInstance(Object.class, 0);
+        head = null;
+    }
+
+    public Node<T> getNode(int index) {
+        if(index < 0) return null;
+        Node current = head;
+        for(int i = 0; i < index; i++) {
+            if(current == null) return null;
+            current = current.getNext();
+        }
+        return current;
     }
 
     @Override
     public T get(int index) {
-        return (T) array[index];
+        if(index < 0) return null;
+        Node current = head;
+        for(int i = 0; i < index; i++) {
+            if(current == null) return null;
+            current = current.getNext();
+        }
+        return (T) current.getData();
     }
 
     @Override
     public T set(int index, T element) {
-        if(index < array.length && index > 0) {
-            array[index] = element;
-            return array[index];
-        }
-        return null;
+        Node current = getNode(index);
+        current.setData(element);
+        return (T) current.getData();
     }
 
     @Override
