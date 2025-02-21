@@ -1,5 +1,6 @@
 package co.edu.uptc.model;
 
+import java.io.EOFException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -7,8 +8,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 public class SimpleList<T> implements List<T> {
-    
-    private Node head;
+    private Node<T> head;
 
     public SimpleList() {
         head = null;
@@ -32,28 +32,50 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public boolean add(T e) {
+        boolean added = false;
         if (head == null) {
             head = new Node<>(e);
+            added = true;
         } else {
             Node<T> aux = head;
             while (aux.getNext() != null) {
                 aux = aux.getNext();
+                added = true;
             }
             aux.setNext(new Node<>(e));
         }
-        return true;
+        return added;
+    }
+
+    @Override
+    public T remove(int index) {
+        if (index < 0 || index >= size()) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        T removedData;
+        if (index == 0) {
+            removedData = head.getData();
+            head = head.getNext();
+        } else {
+            Node<T> prev = getNode(index - 1);
+            Node<T> toRemove = prev.getNext();
+            removedData = toRemove.getData();
+            prev.setNext(toRemove.getNext());
+        }
+
+        return removedData;
     }
 
     @Override
     public boolean contains(Object o) {
+        boolean isContained = false;
         Node<T> aux = head;
-        while (aux != null) {
-            if (aux.getData().equals(o)) {
-                return true;
-            }
+        while (aux != null && !isContained) {
+            isContained = aux.getData().equals(o);
             aux = aux.getNext();
         }
-        return false;
+        return isContained;
     }
 
     @Override
@@ -80,7 +102,6 @@ public class SimpleList<T> implements List<T> {
     public Object[] toArray() {
         int size = size();
         Object[] array = new Object[size];
-
         Node<T> aux = head;
         int i = 0;
         while (aux != null) {
@@ -92,80 +113,118 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public <T> T[] toArray(T[] a) {
-        T[] result = a;
-        if(a.length < size()){
-            result = Arrays.copyOf(a, size());
+        if (a.length < size()) {
+            a = Arrays.copyOf(a, size());
         }
-        for(int i = 0; i < size(); i++){
-            result[i] = (T) a[i];
+
+        Node<T> aux = head;
+        for (int i = 0; i < size(); i++) {
+            a[i] = aux.getData();
+            aux = aux.getNext();
         }
-        if(a.length > size()){
-            for(int i = size(); i < a.length; i++){
-                result[i] = null;
+
+        if (a.length > size()) {
+            for (int i = size(); i < a.length; i++) {
+                a[i] = null;
             }
         }
-        return result;
+
+        return a;
     }
 
     @Override
     public boolean remove(Object o) {
-        if (head.getData().equals(o)) {
-            head = head.getNext();
-            return true;
-        }
-        Node<T> aux = head;
-        while (aux.getNext() != null) {
-            if (aux.getNext().getData().equals(o)) {
-                aux.setNext(aux.getNext().getNext());
-                return true;
+        boolean isRemoved = false;
+        if (head == null) {
+            isRemoved = false;
+        } else {
+            if (head.getData().equals(o)) {
+                head = head.getNext();
+                isRemoved = true;
             }
-            aux = aux.getNext();
+            Node<T> aux = head;
+            while (aux.getNext() != null) {
+                if (aux.getNext().getData().equals(o)) {
+                    aux.setNext(aux.getNext().getNext());
+                    isRemoved = true;
+                }
+                aux = aux.getNext();
+            }
         }
-        return false;
+
+        return isRemoved;
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends T> c) {
-        if(index > array.length || index < 0) return false;
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(Object.class, array.length + c.size());
-        Iterator iterator = c.iterator();
-        for(int i = 0; i < newArray.length; i++) {
-            if(i >= index && iterator.hasNext()) {
-                newArray[i] = (T) iterator.next();
-                continue;
+        boolean added = false;
+        if (index > size() || index < 0) {
+            added = false;
+        } else {
+            Iterator<? extends T> iterator = c.iterator();
+            Node<T> newHead = new Node<>(iterator.next());
+            Node<T> aux = newHead;
+            while (iterator.hasNext()) {
+                aux.setNext(new Node<>(iterator.next()));
+                aux = aux.getNext();
             }
-            if(!iterator.hasNext()) {
-                newArray[i] = array[i - c.size()];
+
+            if (index == 0) {
+                aux.setNext(head);
+                head = newHead;
+                added = true;
+            } else {
+                Node<T> prev = getNode(index - 1);
+                aux.setNext(prev.getNext());
+                prev.setNext(newHead);
             }
-            newArray[i] = array[i];
         }
-        array = newArray;
-        return true;
+        return added;
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
         boolean isModified = false;
-        for(int i = 0; i < array.length; i++)
-            for(int j = 0; i < c.size(); j++)
-                if(c.contains(array[i])) {
-                    isModified = true;
-                    remove(i);
-                    break;
+        Node<T> aux = head;
+        Node<T> prevNode = null;
+
+        while (aux != null) {
+            if (c.contains(aux.getData())) {
+                if (prevNode == null) {
+                    head = aux.getNext();
+                } else {
+                    prevNode.setNext(aux.getNext());
                 }
+                isModified = true;
+            } else {
+                prevNode = aux;
+            }
+            aux = aux.getNext();
+        }
+
         return isModified;
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
         boolean isModified = false;
-        for(int i = 0; i < array.length; i++)
-            for(int j = 0; i < c.size(); j++)
-                if(!c.contains(array[i])) {
-                    isModified = true;
-                    remove(i);
-                    break;
+        Node<T> aux = head;
+        Node<T> prevNode = null;
+
+        while (aux != null) {
+            if (!c.contains(aux.getData())) {
+                if (prevNode == null) {
+                    head = aux.getNext();
+                } else {
+                    prevNode.setNext(aux.getNext());
                 }
+                isModified = true;
+            } else {
+                prevNode = aux;
+            }
+            aux = aux.getNext();
+        }
+
         return isModified;
     }
 
@@ -175,10 +234,12 @@ public class SimpleList<T> implements List<T> {
     }
 
     public Node<T> getNode(int index) {
-        if(index < 0) return null;
-        Node current = head;
-        for(int i = 0; i < index; i++) {
-            if(current == null) return null;
+        if (index < 0)
+            return null;
+        Node<T> current = head;
+        for (int i = 0; i < index; i++) {
+            if (current == null)
+                return null;
             current = current.getNext();
         }
         return current;
@@ -186,10 +247,12 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public T get(int index) {
-        if(index < 0) return null;
-        Node current = head;
-        for(int i = 0; i < index; i++) {
-            if(current == null) return null;
+        if (index < 0)
+            return null;
+        Node<T> current = head;
+        for (int i = 0; i < index; i++) {
+            if (current == null)
+                return null;
             current = current.getNext();
         }
         return (T) current.getData();
@@ -197,23 +260,29 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public T set(int index, T element) {
-        Node current = getNode(index);
+        Node<T> current = getNode(index);
         current.setData(element);
         return (T) current.getData();
     }
 
     @Override
-    public void add(int index, T element) {
-        if(index >= array.length || index < 0) return;
-        T[] newArray = (T[]) java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), array.length + 1);
-        for(int i = 0; i < newArray.length; i++) {
-            if(i == index) {
-                newArray[i] = element;
-                continue;
-            }
-            newArray[i] = array[i > index ? i - 1 : i];
+    public void add(int index, T data) {
+        if (index < 0 || index > size()) {
+            throw new IndexOutOfBoundsException();
         }
-        array = newArray;
+        Node<T> newNode = new Node<>(data);
+
+        if (index == 0) {
+            newNode.setNext(head);
+            head = newNode;
+        } else {
+            Node<T> prev = head;
+            for (int i = 0; i < index - 1; i++) {
+                prev = prev.getNext();
+            }
+            newNode.setNext(prev.getNext());
+            prev.setNext(newNode);
+        }
     }
 
     @Override
@@ -235,29 +304,34 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public int indexOf(Object o) {
-        for(int i = 0; i < array.length; i++)
-            if(array[i].equals(o))
-                return i;
-        return -1;
+        int index = -1;
+        for (int i = 0; i < size(); i++) {
+            if (index == -1 && get(i).equals(o)) {
+                index = i;
+            }
+        }
+        return index;
     }
 
     @Override
     public int lastIndexOf(Object o) {
         int lastFoundIndex = -1;
-        for(int i = 0; i < array.length; i++)
-            if(array[i].equals(o))
+        for (int i = 0; i < size(); i++)
+            if (get(i).equals(o)) {
                 lastFoundIndex = i;
+            }
         return lastFoundIndex;
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
+        boolean allContained = true;
         for (Object element : c) {
             if (!contains(element)) {
-                return false;
+                allContained = true;
             }
         }
-        return true;
+        return allContained;
     }
 
     @Override
@@ -271,7 +345,6 @@ public class SimpleList<T> implements List<T> {
         return modified;
     }
 
-    // Excluidos
     @Override
     public ListIterator<T> listIterator() {
         throw new UnsupportedOperationException("Unimplemented method 'listIterator'");
