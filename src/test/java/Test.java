@@ -1,11 +1,13 @@
-package co.edu.uptc.presenter;
+package co.edu.uptc.test;
 
 import co.edu.uptc.model.SimpleList;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 
 class SimpleListTest {
     private SimpleList<String> list;

@@ -1,6 +1,5 @@
 package co.edu.uptc.model;
 
-import java.io.EOFException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -40,7 +39,6 @@ public class SimpleList<T> implements List<T> {
             Node<T> aux = head;
             while (aux.getNext() != null) {
                 aux = aux.getNext();
-                added = true;
             }
             aux.setNext(new Node<>(e));
         }
@@ -49,11 +47,11 @@ public class SimpleList<T> implements List<T> {
 
     @Override
     public T remove(int index) {
+        T removedData;
         if (index < 0 || index >= size()) {
-            throw new IndexOutOfBoundsException();
+            removedData = null;
         }
 
-        T removedData;
         if (index == 0) {
             removedData = head.getData();
             head = head.getNext();
@@ -111,13 +109,15 @@ public class SimpleList<T> implements List<T> {
         return array;
     }
 
+    @SuppressWarnings("hiding")
     @Override
     public <T> T[] toArray(T[] a) {
         if (a.length < size()) {
             a = Arrays.copyOf(a, size());
         }
 
-        Node<T> aux = head;
+        @SuppressWarnings("unchecked")
+        Node<T> aux = (Node<T>) head;
         for (int i = 0; i < size(); i++) {
             a[i] = aux.getData();
             aux = aux.getNext();
@@ -128,7 +128,6 @@ public class SimpleList<T> implements List<T> {
                 a[i] = null;
             }
         }
-
         return a;
     }
 
@@ -277,7 +276,7 @@ public class SimpleList<T> implements List<T> {
             head = newNode;
         } else {
             Node<T> prev = head;
-            for (int i = 0; i < index - 1; i++) {
+            for (int i = 0; i < index; i++) {
                 prev = prev.getNext();
             }
             newNode.setNext(prev.getNext());
@@ -289,15 +288,13 @@ public class SimpleList<T> implements List<T> {
     public List<T> subList(int fromIndex, int toIndex) {
         SimpleList<T> subList = new SimpleList<>();
         Node<T> aux = head;
-        int index = 0;
-        while (index < fromIndex && aux != null) {
+        for(int i = 0; i <fromIndex; i++){
+            if(aux == null) return null;
             aux = aux.getNext();
-            index++;
         }
-        while (index < toIndex && aux != null) {
+        for (int j = fromIndex; j <= toIndex; j++) {
             subList.add(aux.getData());
             aux = aux.getNext();
-            index++;
         }
         return subList;
     }
